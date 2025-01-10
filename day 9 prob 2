@@ -1,0 +1,149 @@
+845. Longest Mountain in Array
+Solved
+Medium
+Topics
+Companies
+You may recall that an array arr is a mountain array if and only if:
+
+arr.length >= 3
+There exists some index i (0-indexed) with 0 < i < arr.length - 1 such that:
+arr[0] < arr[1] < ... < arr[i - 1] < arr[i]
+arr[i] > arr[i + 1] > ... > arr[arr.length - 1]
+Given an integer array arr, return the length of the longest subarray, which is a mountain. Return 0 if there is no mountain subarray.
+
+ 
+
+Example 1:
+
+Input: arr = [2,1,4,7,3,2,5]
+Output: 5
+Explanation: The largest mountain is [1,4,7,3,2] which has length 5.
+Example 2:
+
+Input: arr = [2,2,2]
+Output: 0
+Explanation: There is no mountain.
+ 
+
+Constraints:
+
+1 <= arr.length <= 104
+0 <= arr[i] <= 104
+ 
+
+Follow up:
+
+Can you solve it using only one pass?
+Can you solve it in O(1) space?
+
+answer code
+
+class Solution {
+public:
+    int longestMountain(vector<int>& arr) {
+        int n = arr.size();
+         vector<int> dp1(n,1);
+         vector<int> dp2(n,1);
+             
+             int ans=0; // store the maximumm number of mountain array
+               
+                // first we calculate length of increasing subsequence and store it in dp1
+                for(int i=1;i<n;i++){
+                     if(arr[i]>arr[i-1]){
+                         dp1[i] = 1+dp1[i-1];
+                     }
+                }
+                 // smae we calculate the lenght of decreasing subsequence and store it in dp2
+                  
+                  for(int i=n-2;i>=0;i--){
+                     if(arr[i]>arr[i+1]){
+                         dp2[i]=1+dp2[i+1];
+                     }
+                  }
+                // now iterate each over ondex and find the length of kmountain array if lenght is greater than 1 tahn sum the both dp1 and dp2 otherwise return -1
+
+                  for(int i=0;i<n;i++){
+                     if(dp1[i]>1 and dp2[i]>1){
+                         ans = max(dp1[i]+dp2[i]-1, ans);
+                     }
+                  }   
+                    return ans;
+
+               
+    }
+};
+
+class Solution {
+public:
+    int longestMountain(vector<int>& arr) {
+         int n=arr.size();
+        int cnt=0;
+        bool peak=false;
+        int ans=0;
+        for(int i=0;i<n;i++)
+        {
+            if(peak)
+            {
+                if(i<(n-1))
+                {
+                    if(arr[i]>arr[i+1]) cnt++;
+                    else if(arr[i]<arr[i+1])
+                    {
+                        ans=max(ans,cnt+1);
+                        cnt=1;
+                        peak=false;
+                    }
+                    else
+                    {
+                        ans=max(ans,cnt+1);
+                        cnt=0;
+                        peak=false;
+                    }
+                }
+                else
+                {
+                    ans=max(ans,cnt+1);
+                }
+
+            }
+            else
+            {
+                if(i<(n-1))
+                {
+                    if(arr[i]<arr[i+1])
+                    {
+                        cnt++;
+                    }
+                    else if(arr[i]>arr[i+1])
+                    {
+                        if(i>0)
+                        {
+                            if(arr[i]>arr[i-1])
+                            {
+                                peak=true;
+                                cnt++;
+                            }
+                            else
+                            {
+                                cnt=0;
+                                peak=false;
+                            }
+                        }
+                        else
+                        {
+                            cnt=0;
+                            peak=false;
+                        }
+                    }
+                    else
+                    {
+                        cnt=0;
+                        peak=false;
+                    }
+                }
+
+            }
+        }
+        return ans;
+    }
+};
