@@ -1,0 +1,206 @@
+638. Shopping Offers
+  
+Medium
+
+In LeetCode Store, there are n items to sell. Each item has a price. However, there are some special offers, and a special offer consists of one or more different kinds of items with a sale price.
+
+You are given an integer array price where price[i] is the price of the ith item, and an integer array needs where needs[i] is the number of pieces of the ith item you want to buy.
+
+You are also given an array special where special[i] is of size n + 1 where special[i][j] is the number of pieces of the jth item in the ith offer and special[i][n] (i.e., the last integer in the array) is the price of the ith offer.
+
+Return the lowest price you have to pay for exactly certain items as given, where you could make optimal use of the special offers. You are not allowed to buy more items than you want, even if that would lower the overall price. You could use any of the special offers as many times as you want.
+
+ 
+
+Example 1:
+
+Input: price = [2,5], special = [[3,0,5],[1,2,10]], needs = [3,2]
+Output: 14
+Explanation: There are two kinds of items, A and B. Their prices are $2 and $5 respectively. 
+In special offer 1, you can pay $5 for 3A and 0B
+In special offer 2, you can pay $10 for 1A and 2B. 
+You need to buy 3A and 2B, so you may pay $10 for 1A and 2B (special offer #2), and $4 for 2A.
+Example 2:
+
+Input: price = [2,3,4], special = [[1,1,0,4],[2,2,1,9]], needs = [1,2,1]
+Output: 11
+Explanation: The price of A is $2, and $3 for B, $4 for C. 
+You may pay $4 for 1A and 1B, and $9 for 2A ,2B and 1C. 
+You need to buy 1A ,2B and 1C, so you may pay $4 for 1A and 1B (special offer #1), and $3 for 1B, $4 for 1C. 
+You cannot add more items, though only $9 for 2A ,2B and 1C.
+ 
+
+Constraints:
+
+n == price.length == needs.length
+1 <= n <= 6
+0 <= price[i], needs[i] <= 10
+1 <= special.length <= 100
+special[i].length == n + 1
+0 <= special[i][j] <= 50
+The input is generated that at least one of special[i][j] is non-zero for 0 <= j <= n - 1.
+
+
+Answer
+
+
+This problem can be solved using **Dynamic Programming (DP)** and **Backtracking**, as it requires finding the minimum cost to satisfy the "needs" of items using both individual purchases and special offers.
+
+---
+
+### **Dynamic Programming Approach**
+
+#### 1. **State Representation**
+Let the DP state be:
+\[
+dp(\text{needs}) = \text{minimum cost to satisfy the remaining needs}
+\]
+Where `needs` is an array representing the number of pieces of each item still needed.
+
+#### 2. **Base Case**
+If `needs` becomes `[0, 0, ..., 0]` (all needs satisfied), the cost is 0:
+\[
+dp([0, 0, ..., 0]) = 0
+\]
+
+#### 3. **State Transition**
+To calculate `dp(needs)`, we have two choices:
+1. Buy the required items individually:
+   \[
+   \text{cost} = \sum (\text{needs}[i] \times \text{price}[i])
+   \]
+2. Use a valid special offer:
+   - A special offer is valid if it does not exceed the current `needs`.
+   - Subtract the items in the offer from the current `needs` and calculate:
+     \[
+     \text{cost} = \text{offer price} + dp(\text{new needs})
+     \]
+Take the **minimum** of all these options.
+
+#### 4. **Optimization**
+- Use memoization to avoid recalculating the result for the same `needs` state.
+
+#### 5. **Backtracking**
+To apply a special offer, check whether it is valid by comparing each item's count in the offer with the corresponding count in `needs`.
+
+---
+
+### **Code Implementation**
+
+Here’s the C++ solution using DP and backtracking:
+
+```cpp
+class Solution {
+public:
+    int shoppingOffers(vector<int>& price, vector<vector<int>>& special, vector<int>& needs) {
+        unordered_map<string, int> memo;
+        return dfs(price, special, needs, memo);
+    }
+
+private:
+    // Convert the `needs` vector to a string for memoization
+    string serialize(const vector<int>& needs) {
+        string key = "";
+        for (int n : needs) {
+            key += to_string(n) + ",";
+        }
+        return key;
+    }
+
+    // DFS function with memoization
+    int dfs(vector<int>& price, vector<vector<int>>& special, vector<int>& needs, unordered_map<string, int>& memo) {
+        string key = serialize(needs);
+        if (memo.count(key)) return memo[key];
+
+        // Calculate the cost without any special offer (buy individually)
+        int minCost = 0;
+        for (int i = 0; i < needs.size(); i++) {
+            minCost += needs[i] * price[i];
+        }
+
+        // Try each special offer
+        for (auto& offer : special) {
+            vector<int> newNeeds(needs);
+            bool valid = true;
+            for (int i = 0; i < needs.size(); i++) {
+                newNeeds[i] -= offer[i];
+                if (newNeeds[i] < 0) { // Offer exceeds the needs
+                    valid = false;
+                    break;
+                }
+            }
+            if (valid) {
+                minCost = min(minCost, offer.back() + dfs(price, special, newNeeds, memo));
+            }
+        }
+
+        return memo[key] = minCost;
+    }
+};
+```
+
+---
+
+### **Explanation of the Code**
+
+1. **Memoization with `unordered_map`:**
+   - The `memo` stores the minimum cost for a specific `needs` state.
+   - The `serialize` function converts the `needs` array into a string to use as a key.
+
+2. **Base Case:**
+   - If all `needs` are 0, the cost is 0 (implicit in the `minCost` initialization).
+
+3. **Iterating Over Special Offers:**
+   - Check if the offer is valid by ensuring no item count in `newNeeds` goes negative.
+   - If valid, recursively calculate the cost for the `newNeeds` state.
+
+4. **Optimization by Memoization:**
+   - Store the result of each `needs` state in `memo` to avoid recomputation.
+
+---
+
+### **Complexity Analysis**
+
+1. **Time Complexity:**
+   - The maximum possible state space for `needs` is \( 11^n \), where \( n \leq 6 \).
+   - For each state, we check all \( m \) special offers, so the time complexity is:
+     \[
+     O(m \cdot 11^n)
+     \]
+
+2. **Space Complexity:**
+   - Memoization table stores \( O(11^n) \) states.
+   - Recursive call stack depth is \( O(n) \).
+
+---
+
+### **Example Walkthrough**
+
+#### Input: 
+```cpp
+price = [2, 3, 4];
+special = [[1, 1, 0, 4], [2, 2, 1, 9]];
+needs = [1, 2, 1];
+```
+
+#### Steps:
+1. Base cost (buy individually): 
+   \[
+   1 \times 2 + 2 \times 3 + 1 \times 4 = 12
+   \]
+
+2. Try special offer 1 \([1, 1, 0, 4]\):
+   - Apply offer: Remaining needs = \([0, 1, 1]\).
+   - Cost = \( 4 + dp([0, 1, 1]) \).
+
+3. Try special offer 2 \([2, 2, 1, 9]\):
+   - Invalid (requires more items than needed).
+
+4. Recursive calls calculate the optimal cost for smaller needs.
+
+#### Output:
+The minimum cost is \( 11 \).
+
+---
+
+This approach ensures optimal use of special offers while respecting the constraints of the problem.
